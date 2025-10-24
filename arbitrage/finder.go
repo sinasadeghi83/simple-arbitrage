@@ -11,12 +11,12 @@ import (
 )
 
 type ArbDetail struct {
-	Src        string
-	Dest       string
-	Amount     string
-	Ask        string
-	Bid        string
-	LastUpdate uint
+	Pair   string
+	Src    string
+	Dest   string
+	Amount string
+	Ask    string
+	Bid    string
 }
 
 var ErrNoArb = fmt.Errorf("No arbitrage found")
@@ -38,28 +38,25 @@ func Find(pair string, nob nobitex.Nobitex, tab tabdeal.Tabdeal) (error, *ArbDet
 	leastNobAsk := nobRes.Asks[0][0]
 	leastTabAsk := tabRes.Asks[0][0]
 
-	// fmt.Printf("NOB TAB: %s %s\n", leastNobBid, leastTabBid)
-	// fmt.Printf("TAB NOB: %s %s\n", leastTabAsk, leastNobBid)
-
 	if leastNobAsk < leastTabBid {
 		return nil, &ArbDetail{
-			Src:        "Nobitex",
-			Dest:       "Tabdeal",
-			Amount:     min(nobRes.Asks[0][1], tabRes.Bids[0][1]),
-			Ask:        leastNobAsk,
-			Bid:        leastTabBid,
-			LastUpdate: nobRes.LastUpdate,
+			Pair:   pair,
+			Src:    "Nobitex",
+			Dest:   "Tabdeal",
+			Amount: min(nobRes.Asks[0][1], tabRes.Bids[0][1]),
+			Ask:    leastNobAsk,
+			Bid:    leastTabBid,
 		}
 	}
 
 	if leastTabAsk < leastNobBid {
 		return nil, &ArbDetail{
-			Src:        "Tabdeal",
-			Dest:       "Nobitex",
-			Amount:     min(tabRes.Asks[0][1], nobRes.Bids[0][1]),
-			Ask:        leastTabAsk,
-			Bid:        leastNobBid,
-			LastUpdate: nobRes.LastUpdate,
+			Pair:   pair,
+			Src:    "Tabdeal",
+			Dest:   "Nobitex",
+			Amount: min(tabRes.Asks[0][1], nobRes.Bids[0][1]),
+			Ask:    leastTabAsk,
+			Bid:    leastNobBid,
 		}
 	}
 
@@ -69,7 +66,7 @@ func Find(pair string, nob nobitex.Nobitex, tab tabdeal.Tabdeal) (error, *ArbDet
 func FindPeriodicly(ctx context.Context, pair string, period time.Duration, arb chan ArbDetail) {
 	nob := nobitex.New()
 	tab := tabdeal.New()
-	lastUpdate := uint(time.Now().UnixMilli())
+	lastArb := ArbDetail{}
 
 	for ctx.Err() == nil {
 		time.Sleep(time.Second)
@@ -83,10 +80,9 @@ func FindPeriodicly(ctx context.Context, pair string, period time.Duration, arb 
 			continue
 		}
 
-		if arbDetail.LastUpdate > lastUpdate {
-			lastUpdate = arbDetail.LastUpdate
-			// fmt.Println(arbDetail)
+		if *arbDetail != lastArb {
 			arb <- *arbDetail
+			lastArb = *arbDetail
 		}
 	}
 }
