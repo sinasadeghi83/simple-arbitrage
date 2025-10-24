@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/sinasadeghi83/simple-arbitrage/exchange"
 	"resty.dev/v3"
 )
 
@@ -13,7 +14,6 @@ type Nobitex struct {
 
 type OrderBook struct {
 	Status         string     `json:"status"`
-	Pair           string     `json:"pair"`
 	LastUpdate     uint       `json:"lastUpdate"`
 	LastTradePrice string     `json:"lastTradePrice"`
 	Asks           [][]string `json:"asks"`
@@ -27,7 +27,7 @@ func New() Nobitex {
 	}
 }
 
-func (nob Nobitex) GetOrderBook(pair string) (*OrderBook, error) {
+func (nob Nobitex) GetOrderBook(pair string) (*exchange.OrderBook, error) {
 	res, err := nob.cl.R().
 		SetPathParam(
 			"pair", pair,
@@ -42,9 +42,16 @@ func (nob Nobitex) GetOrderBook(pair string) (*OrderBook, error) {
 		return nil, fmt.Errorf("status code: %d", res.StatusCode())
 	}
 
-	var orderBook OrderBook
-	if err := json.Unmarshal(res.Bytes(), &orderBook); err != nil {
+	var nobOrderBook OrderBook
+	if err := json.Unmarshal(res.Bytes(), &nobOrderBook); err != nil {
 		return nil, err
+	}
+
+	orderBook := exchange.OrderBook{
+		Pair:       pair,
+		LastUpdate: nobOrderBook.LastUpdate,
+		Asks:       nobOrderBook.Asks,
+		Bids:       nobOrderBook.Bids,
 	}
 
 	return &orderBook, nil
