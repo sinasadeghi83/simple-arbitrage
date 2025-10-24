@@ -9,7 +9,9 @@ COPY . .
 
 RUN go build -o /app/scraper
 
-FROM scratch
+FROM alpine:latest
+
+RUN apk add --no-cache ca-certificates
 
 WORKDIR /app
 
