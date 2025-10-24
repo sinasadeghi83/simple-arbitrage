@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sinasadeghi83/simple-arbitrage/arbitrage"
 	"github.com/sinasadeghi83/simple-arbitrage/config"
+	_ "github.com/sinasadeghi83/simple-arbitrage/metrics"
 	"github.com/spf13/viper"
 )
 
