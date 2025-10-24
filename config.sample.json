@@ -1,0 +1,16 @@
+{
+    "bot":{
+        "token":"8256511808:aaskdjfhsakldj-1n2kaeBcODlQOiHAo",
+        "channel_id":"@testchannel"
+    },
+
+    "arbitrage":{
+        "pairs":[
+            "BTCUSDT",
+            "TONUSDT",
+            "TRXUSDT",
+            "ETHUSDT",
+            "DOGEUSDT"
+        ]
+    }
+}
