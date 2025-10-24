@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/sinasadeghi83/simple-arbitrage/exchange"
+	"github.com/sinasadeghi83/simple-arbitrage/metrics"
 	"resty.dev/v3"
 )
 
@@ -34,14 +35,18 @@ func (nob Nobitex) GetOrderBook(pair string) (*exchange.OrderBook, error) {
 		).
 		Get("https://apiv2.nobitex.ir/v3/orderbook/{pair}")
 
+	metrics.ResponseTime.WithLabelValues("nobitex").Observe(float64(res.Duration().Milliseconds()))
 	if err != nil {
+		metrics.RequestStatus.WithLabelValues("nobitex", "failed").Inc()
 		return nil, err
 	}
 
 	if res.StatusCode() != 200 {
+		metrics.RequestStatus.WithLabelValues("nobitex", "failed").Inc()
 		return nil, fmt.Errorf("status code: %d", res.StatusCode())
 	}
 
+	metrics.RequestStatus.WithLabelValues("nobitex", "success").Inc()
 	var nobOrderBook OrderBook
 	if err := json.Unmarshal(res.Bytes(), &nobOrderBook); err != nil {
 		return nil, err
