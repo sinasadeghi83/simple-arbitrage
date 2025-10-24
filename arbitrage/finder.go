@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
+	"github.com/sinasadeghi83/simple-arbitrage/metrics"
 	"github.com/sinasadeghi83/simple-arbitrage/nobitex"
 	"github.com/sinasadeghi83/simple-arbitrage/tabdeal"
 )
@@ -39,6 +41,11 @@ func Find(pair string, nob nobitex.Nobitex, tab tabdeal.Tabdeal) (error, *ArbDet
 	leastTabAsk := tabRes.Asks[0][0]
 
 	if leastNobAsk < leastTabBid {
+		metrics.ArbitrageOpportunityRate.Inc()
+		askPrice, _ := strconv.ParseFloat(leastNobAsk, 64)
+		bidPrice, _ := strconv.ParseFloat(leastTabBid, 64)
+		metrics.LastPriceDifference.WithLabelValues(pair, "Nobitex", "Tabdeal").Set(bidPrice - askPrice)
+
 		return nil, &ArbDetail{
 			Pair:   pair,
 			Src:    "Nobitex",
@@ -50,6 +57,11 @@ func Find(pair string, nob nobitex.Nobitex, tab tabdeal.Tabdeal) (error, *ArbDet
 	}
 
 	if leastTabAsk < leastNobBid {
+		metrics.ArbitrageOpportunityRate.Inc()
+		askPrice, _ := strconv.ParseFloat(leastTabAsk, 64)
+		bidPrice, _ := strconv.ParseFloat(leastNobBid, 64)
+		metrics.LastPriceDifference.WithLabelValues(pair, "Tabdeal", "Nobitex").Set(bidPrice - askPrice)
+
 		return nil, &ArbDetail{
 			Pair:   pair,
 			Src:    "Tabdeal",
