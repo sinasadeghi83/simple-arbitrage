@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sinasadeghi83/simple-arbitrage/arbitrage"
 	"github.com/sinasadeghi83/simple-arbitrage/config"
 	"github.com/spf13/viper"
@@ -47,6 +49,10 @@ func main() {
 			fmt.Println(arbDetail)
 		}
 	}()
+
+	http.Handle("/metrics", promhttp.Handler())
+
+	go http.ListenAndServe(":"+viper.GetString("METRICS_PORT"), nil)
 
 	b.Start(ctx)
 }
