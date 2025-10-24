@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/sinasadeghi83/simple-arbitrage/exchange"
+	"github.com/sinasadeghi83/simple-arbitrage/metrics"
 	"resty.dev/v3"
 )
 
@@ -32,14 +33,18 @@ func (tab Tabdeal) GetOrderBook(pair string) (*exchange.OrderBook, error) {
 		).
 		Get("https://api1.tabdeal.org/r/api/v1/depth")
 
+	metrics.ResponseTime.WithLabelValues("tabdeal").Observe(float64(res.Duration().Milliseconds()))
 	if err != nil {
+		metrics.RequestStatus.WithLabelValues("tabdeal", "failed").Inc()
 		return nil, err
 	}
 
 	if res.StatusCode() != 200 {
+		metrics.RequestStatus.WithLabelValues("tabdeal", "failed").Inc()
 		return nil, fmt.Errorf("status code: %d", res.StatusCode())
 	}
 
+	metrics.RequestStatus.WithLabelValues("tabdeal", "success").Inc()
 	var tabOrderBook OrderBook
 	if err := json.Unmarshal(res.Bytes(), &tabOrderBook); err != nil {
 		return nil, err
